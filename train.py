@@ -36,6 +36,7 @@ from argparse import ArgumentParser, Namespace
 from arguments import ModelParams, PipelineParams, OptimizationParams
 from pyhocon import ConfigFactory
 from rematching.mvf_utils import general as utils
+from rematching.mvf_utils.renaming import full_name
 
 try:
     from torch.utils.tensorboard import SummaryWriter
@@ -69,7 +70,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations):
     conf = ConfigFactory.parse_file("./rematching/arguments.conf")
     conf.update({"scene":scene})
 
-    rematch = utils.get_class(conf.get_string("prior.name"))(**conf)
+    rematch = utils.get_class(full_name(conf.get_string("prior.name")))(**conf)
     rematch.train_setting(opt)
     for iteration in range(1, opt.iterations + 1):
         if network_gui.conn == None:

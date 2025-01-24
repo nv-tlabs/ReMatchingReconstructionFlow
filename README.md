@@ -44,42 +44,15 @@ pip install -r requirements.txt
 The ReMatching framework hyperparameters can be set in the configuration file *./rematching/arguments.conf*.
 - #### Prior selection
     We currently support the following prior classes (names of parameters are consistent with the ones used in the paper):
-    - ##### P1 prior 
-        ```
-        prior.name = rematching.rematching_loss.DiscreteReMatchingLoss_P1
-        prior.P1.V = [selection of tensors as base for P1 prior]
-        ```
-    - ##### P3 prior
-        ```
-        prior.name = rematching.rematching_loss.DiscreteReMatchingLoss_AdaptivePriors_P3
-        prior.adaptive_prior.K = [number of prior classes in adaptive prior]
-        prior.P3.B = [basis function hyperparameter for P3 prior]
-        ```
-    - ##### P4 prior
-        ```
-        prior.name = rematching.rematching_loss.DiscreteReMatchingLoss_AdaptivePriors_P4
-        prior.adaptive_prior.K = [number of prior classes in adaptive prior]
-        ```
-    - ##### Combination of P1 and P3 priors
-        ```
-        prior.name = rematching.rematching_loss.DiscreteReMatchingLoss_AdaptivePriors_P1_P3
-        prior.adaptive_prior.K = [number of prior classes in adaptive prior]
-        prior.P1.V = [selection of tensors as base for P1 prior]
-        prior.P3.B = [basis function hyperparameter for P3 prior]
-        ```
-    - ##### Combination of P1 and P4 priors
-        ```
-        prior.name = rematching.rematching_loss.DiscreteReMatchingLoss_AdaptivePriors_P1_P4
-        prior.adaptive_prior.K = [number of prior classes in adaptive prior]
-        prior.P1.V = [selection of tensors as base for P1 prior]
-        ```
-    - ##### Image level P3 prior
-        ```
-        prior.name = rematching.rematching_loss.FunctionReMatchingLoss_Image_P3
-        prior.adaptive_prior.K = [number of prior classes in adaptive prior]
-        prior.P3.B = [basis function hyperparameter for P3 prior]
-        prior.cam_time = [camera selection for the image-level ReMatching loss]
-        ```
+    | Prior | Prior parameters |
+    |---------|-------|
+    |   P1      |prior.name = P1<br>prior.P1.V = [selected base tensors]<tr></tr>|
+    |   P3      |prior.name = P3<br>prior.adaptive_prior.K = [number of parts]<br>prior.P3.B = [basis function hyperparameter]<tr></tr>|
+    |   P4      |prior.name = P4<br>prior.adaptive_prior.K = [number of parts]<tr></tr>|
+    |   P1 + P3|prior.name = P1_P3<br>prior.adaptive_prior.K = [number of parts]<br>prior.P1.V = [selected base tensors]<br>prior.P3.B = [basis function hyperparameter]<tr></tr>|
+    |   P1 + P4|prior.name = P1_P4<br>prior.adaptive_prior.K = [number of parts]<br>prior.P1.V = [selected base tensors]<tr></tr>|
+    |   P3 (image level)|prior.name = P3_Image<br>prior.adaptive_prior.K = [number of parts]<br>prior.P3.B = [basis function hyperparameter]<br>prior.cam_time = [view selection for the image-level loss]<tr></tr>|
+
 - #### General hyperparameters
     ```
       general.rm_weight = [ReMatching loss weight]  
