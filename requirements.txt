@@ -8,3 +8,5 @@ imageio-ffmpeg
 scipy
 dearpygui
 lpips
+pyhocon
+einops

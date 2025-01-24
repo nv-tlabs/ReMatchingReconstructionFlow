@@ -1,3 +1,13 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+# its affiliates is strictly prohibited.
+
 #
 # Copyright (C) 2023, Inria
 # GRAPHDECO research group, https://team.inria.fr/graphdeco
@@ -11,7 +21,9 @@
 
 import os
 import torch
+import random
 from random import randint
+import numpy as np
 from utils.loss_utils import l1_loss, ssim, kl_divergence
 from gaussian_renderer import render, network_gui
 import sys
@@ -22,6 +34,8 @@ from tqdm import tqdm
 from utils.image_utils import psnr
 from argparse import ArgumentParser, Namespace
 from arguments import ModelParams, PipelineParams, OptimizationParams
+from pyhocon import ConfigFactory
+from rematching.mvf_utils import general as utils
 
 try:
     from torch.utils.tensorboard import SummaryWriter
@@ -29,7 +43,6 @@ try:
     TENSORBOARD_FOUND = True
 except ImportError:
     TENSORBOARD_FOUND = False
-
 
 def training(dataset, opt, pipe, testing_iterations, saving_iterations):
     tb_writer = prepare_output_and_logger(dataset)
@@ -52,6 +65,12 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations):
     best_iteration = 0
     progress_bar = tqdm(range(opt.iterations), desc="Training progress")
     smooth_term = get_linear_noise_func(lr_init=0.1, lr_final=1e-15, lr_delay_mult=0.01, max_steps=20000)
+
+    conf = ConfigFactory.parse_file("./rematching/arguments.conf")
+    conf.update({"scene":scene})
+
+    rematch = utils.get_class(conf.get_string("prior.name"))(**conf)
+    rematch.train_setting(opt)
     for iteration in range(1, opt.iterations + 1):
         if network_gui.conn == None:
             network_gui.try_connect()
@@ -89,6 +108,8 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations):
 
         if iteration < opt.warm_up:
             d_xyz, d_rotation, d_scaling = 0.0, 0.0, 0.0
+            rm_loss = None
+            loss = 0
         else:
             N = gaussians.get_xyz.shape[0]
             time_input = fid.unsqueeze(0).expand(N, -1)
@@ -96,16 +117,22 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations):
             ast_noise = 0 if dataset.is_blender else torch.randn(1, 1, device='cuda').expand(N, -1) * time_interval * smooth_term(iteration)
             d_xyz, d_rotation, d_scaling = deform.step(gaussians.get_xyz.detach(), time_input + ast_noise)
 
+            time_sampled = time_input + torch.normal(torch.tensor([0.0]),torch.tensor([0.1])).cuda()   
+
+            psi = rematch(gaussians,deform,time_sampled,(render,pipe,background))
+            rm_loss = rematch.rematching_loss(*psi)
+            loss = rm_loss["total"]
+
         # Render
         render_pkg_re = render(viewpoint_cam, gaussians, pipe, background, d_xyz, d_rotation, d_scaling, dataset.is_6dof)
         image, viewspace_point_tensor, visibility_filter, radii = render_pkg_re["render"], render_pkg_re[
             "viewspace_points"], render_pkg_re["visibility_filter"], render_pkg_re["radii"]
-        # depth = render_pkg_re["depth"]
 
         # Loss
         gt_image = viewpoint_cam.original_image.cuda()
         Ll1 = l1_loss(image, gt_image)
-        loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
+        recon_loss = ((1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image)))
+        loss = loss + recon_loss
         loss.backward()
 
         iter_end.record()
@@ -115,9 +142,15 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations):
 
         with torch.no_grad():
             # Progress bar
-            ema_loss_for_log = 0.4 * loss.item() + 0.6 * ema_loss_for_log
+            ema_loss_for_log = 0.4 * recon_loss.item() + 0.6 * ema_loss_for_log
             if iteration % 10 == 0:
-                progress_bar.set_postfix({"Loss": f"{ema_loss_for_log:.{7}f}"})
+                if rm_loss!=None:
+                    total_rm = rm_loss["total"]
+                    angle_rm = rm_loss["angle"]
+                    speed_rm = rm_loss["speed"]
+                    progress_bar.set_postfix({"Loss": f"{ema_loss_for_log:.{7}f}","RM Loss": f"{total_rm:.{4}f},{angle_rm:.{4}f},{speed_rm:.{4}f}"})
+                else:
+                    progress_bar.set_postfix({"Loss": f"{ema_loss_for_log:.{7}f}"})
                 progress_bar.update(10)
             if iteration == opt.iterations:
                 progress_bar.close()
@@ -161,6 +194,9 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations):
                 gaussians.optimizer.zero_grad(set_to_none=True)
                 deform.optimizer.zero_grad()
                 deform.update_learning_rate(iteration)
+                rematch.optimizer.step()
+                rematch.optimizer.zero_grad()
+                rematch.update_learning_rate(iteration)
 
     print("Best PSNR = {} in Iteration {}".format(best_psnr, best_iteration))
 

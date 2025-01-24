@@ -56,9 +56,9 @@ class ModelParams(ParamGroup):
         self._resolution = -1
         self._white_background = False
         self.data_device = "cuda"
-        self.eval = False
+        self.eval = True
         self.load2gpu_on_the_fly = False
-        self.is_blender = False
+        self.is_blender = True
         self.is_6dof = False
         super().__init__(parser, "Loading Parameters", sentinel)
 
