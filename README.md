@@ -41,55 +41,52 @@ pip install -r requirements.txt
 ```
 
 ### Setting ReMatching framework hyperparameters
-The following ReMatching framework hyperparameters can be set in *./rematching/arguments.conf*:
+The ReMatching framework hyperparameters can be set in the configuration file *./rematching/arguments.conf*.
+- #### Prior selection
+    We currently support the following prior classes (names of parameters are consistent with the ones used in the paper):
+    - ##### P1 prior 
+        ```
+        prior.name = rematching.rematching_loss.DiscreteReMatchingLoss_P1
+        prior.P1.V = [selection of tensors as base for P1 prior]
+        ```
+    - ##### P3 prior
+        ```
+        prior.name = rematching.rematching_loss.DiscreteReMatchingLoss_AdaptivePriors_P3
+        prior.adaptive_prior.K = [number of prior classes in adaptive prior]
+        prior.P3.B = [basis function hyperparameter for P3 prior]
+        ```
+    - ##### P4 prior
+        ```
+        prior.name = rematching.rematching_loss.DiscreteReMatchingLoss_AdaptivePriors_P4
+        prior.adaptive_prior.K = [number of prior classes in adaptive prior]
+        ```
+    - ##### Combination of P1 and P3 priors
+        ```
+        prior.name = rematching.rematching_loss.DiscreteReMatchingLoss_AdaptivePriors_P1_P3
+        prior.adaptive_prior.K = [number of prior classes in adaptive prior]
+        prior.P1.V = [selection of tensors as base for P1 prior]
+        prior.P3.B = [basis function hyperparameter for P3 prior]
+        ```
+    - ##### Combination of P1 and P4 priors
+        ```
+        prior.name = rematching.rematching_loss.DiscreteReMatchingLoss_AdaptivePriors_P1_P4
+        prior.adaptive_prior.K = [number of prior classes in adaptive prior]
+        prior.P1.V = [selection of tensors as base for P1 prior]
+        ```
+    - ##### Image level P3 prior
+        ```
+        prior.name = rematching.rematching_loss.FunctionReMatchingLoss_Image_P3
+        prior.adaptive_prior.K = [number of prior classes in adaptive prior]
+        prior.P3.B = [basis function hyperparameter for P3 prior]
+        prior.cam_time = [camera selection for the image-level ReMatching loss]
+        ```
+- #### General hyperparameters
+    ```
+      general.rm_weight = [ReMatching loss weight]  
+      prior.adaptive_prior.entropy_weight = [entropy loss weight for adaptive prior prediction]
+    ```
 
-- ### general
-  - rm_weight [ReMatching loss weight]
-  - angle_weight [split used for the angle/speed evaluation of ReMatching loss]
-- ### prior
-  - name [selected prior, currently supporting the following options:]
-    - *rematching.rematching_loss.DiscreteReMatchingLoss_P1*
-    - *rematching.rematching_loss.DiscreteReMatchingLoss_AdaptivePriors_P3*
-    - *rematching.rematching_loss.DiscreteReMatchingLoss_AdaptivePriors_P4*
-    - *rematching.rematching_loss.DiscreteReMatchingLoss_AdaptivePriors_P1_P3*
-    - *rematching.rematching_loss.DiscreteReMatchingLoss_AdaptivePriors_P1_P4*
-    - *rematching.rematching_loss.FunctionReMatchingLoss_Image_P3*
-  - adaptive_prior
-    - K [number of prior classes in adaptive prior]
-    - t_multires [hyperparameter for W prediction]
-    - W_hidden_dim [hyperparameter for W prediction]
-    - entropy_weight [entropy loss weight for W prediction]
-  - P1
-    - V [selection of tensors as base for P1 prior]
-  - P3
-    - B [hyperparameter for P3 loss]
-  - cam_time [camera selection for the image-level ReMatching loss]
-  
 
-An example of one such set of ReMatching parameters for a scene made up of 10 parts that we want to use with the adaptive rigid prior P4 would be:
-```
-general{
-    rm_weight = 0.001
-}
-prior{
-    name = rematching.rematching_loss.DiscreteReMatchingLoss_AdaptivePriors_P4
-    adaptive_prior{
-        K = 10
-        t_multires = 6
-        W_hidden_dim = 256
-        entropy_weight = 0.0001
-    }
-    P1{
-        V = []
-        projected_weight = 0.0
-    }
-    P3{
-        B = 0
-    }
-    cam_time = 0.0
-}
-
-```
 
 ### Training
 
@@ -144,3 +141,4 @@ This repo is based on https://github.com/ingra14m/Deformable-3D-Gaussians.
   year={2024}
 }
 ```
+

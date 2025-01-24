@@ -199,14 +199,16 @@ class ReMatching(nn.Module):
         general = kwargs["general"]
         prior = kwargs["prior"]
 
-        self.rm_weight = general.rm_weight
-        self.embed_time_fn, time_input_ch = get_embedder(prior.adaptive_prior.t_multires, 1)
-        self.K = prior.adaptive_prior.K
-        self.entropy_weight = prior.adaptive_prior.entropy_weight
-        self.W_hidden_dim = prior.adaptive_prior.W_hidden_dim
-        self.B = prior.P3.B
-        self.projected_weight = prior.P1.projected_weight
+        self.t_multires = prior.get("adaptive_prior.t_multires",6)
+        self.W_hidden_dim = prior.get("adaptive_prior.W_hidden_dim",256)
+        self.projected_weight = prior.get("P1.projected_weight",0.3)
+        self.rm_weight = general.get("rm_weight",0.001)
+        self.embed_time_fn, time_input_ch = get_embedder(self.t_multires, 1)
+        self.K = prior.get("adaptive_prior.K",5)
+        self.entropy_weight = prior.get("adaptive_prior.entropy_weight",0.0001)
+        self.B = prior.get("P3.B",1)
         self.activation = torch.nn.Softplus(beta=100)
+        self.V = torch.tensor(prior.get("P1.V",[[0.0,0,1]])).cuda() 
 
         if self.K>0:
             self.W_net = nn.ModuleList([nn.Linear(3+3+time_input_ch, self.W_hidden_dim), nn.Linear(self.W_hidden_dim,self.K)]).cuda()
@@ -392,11 +394,6 @@ class DiscreteReMatchingLoss_P1(DiscreteReMatchingLoss):
     # Directional restricted class (equation 11)
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
-        if "V" not in kwargs.keys():
-            # Default value
-            self.V = torch.tensor([[0.0,0,1]]).cuda() 
-        else:
-            self.V = kwargs["V"].cuda()
 
     def match(self, psi):
         gamma_dot = torch.nn.functional.normalize(psi[2],dim=-1).float()
