@@ -404,6 +404,9 @@ class DiscreteReMatchingLoss_P1(DiscreteReMatchingLoss):
         gamma_dot = torch.nn.functional.normalize(psi[2],dim=-1).float()
         rematching_loss = {}
         rematching_loss["total"] = (W.unsqueeze(0)*(torch.linalg.norm(gamma_dot - prior_recon,dim=-1))).mean()
+        rematching_loss["entropy"] = torch.tensor(0).cuda()
+        rematching_loss["speed"] = torch.tensor(0).cuda()
+        rematching_loss["angle"] = torch.tensor(0).cuda()
         return rematching_loss
 
 class DiscreteReMatchingLoss_AdaptivePriors_P4(DiscreteReMatchingLoss):
