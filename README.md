@@ -30,8 +30,8 @@ reconstruction accuracy of current state-of-the-art models.*
 ### Environment setup
 
 ```bash
-git clone https://github.com/nv-tlabs/ReMatching.git --recursive
-cd ReMatching/code
+git clone https://github.com/nv-tlabs/ReMatchingReconstructionFlow.git --recursive
+cd ReMatchingReconstructionFlow
 
 conda create -n rematching python=3.7
 conda activate rematching
