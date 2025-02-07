@@ -99,10 +99,7 @@ to discuss what you would like to change.
 Copyright &copy; 2025, NVIDIA Corporation & affiliates. All rights reserved.
 This work is made available under the [Nvidia Source Code License](LICENSE.txt).
 
-## Acknowledgement
-
-This repo is based on https://github.com/ingra14m/Deformable-3D-Gaussians.
-
+The code repository is based on the [Deformable-3D-Gaussians](https://github.com/ingra14m/Deformable-3D-Gaussians) repository, which is made available under the [MIT License](LICENSE_MIT.txt). The repository also contains the [Differentiable Gaussian Rasterization](https://github.com/ingra14m/diff-gaussian-rasterization-extentions) submodule, which is under the [Gaussian-Splatting License](LICENSE_GS.txt).
 
 ## Citation
 ```
