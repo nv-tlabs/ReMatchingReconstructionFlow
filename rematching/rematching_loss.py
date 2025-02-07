@@ -78,6 +78,7 @@ class Matching():
 
     def div_free_basis(x, k):
         """ Create divergence free basis (equation 20), batched input support (b=batch size)
+        """ based on https://github.com/marvin-eisenberger/hamiltonian-interpolation (Eisenberger et al., 2019)
 
         Args:
             x (torch.Tensor): size [b, n, 3]
